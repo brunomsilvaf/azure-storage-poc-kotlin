@@ -4,13 +4,10 @@ import com.azure.core.credential.TokenCredential
 import com.azure.identity.ClientSecretCredentialBuilder
 import com.azure.storage.blob.BlobClient
 import com.azure.storage.blob.BlobClientBuilder
-import org.springframework.stereotype.Component
+import org.springframework.stereotype.Service
 import java.io.ByteArrayInputStream
-import java.io.IOException
-import java.nio.file.Files
-import java.nio.file.Paths
 
-@Component
+@Service
 class AzureStorageClient(private val config: AzureStorageConfiguration) {
 
     fun getCredentials(): TokenCredential {
@@ -24,38 +21,25 @@ class AzureStorageClient(private val config: AzureStorageConfiguration) {
     fun getBlobClient(url: String): BlobClient {
         return BlobClientBuilder()
             .endpoint(url)
-            .credential(getCredentials())
+            .credential(this.getCredentials())
             .buildClient()
     }
 
-    fun uploadBlob(
-        blobName: String,
-        body: String
-    ): String? {
+    fun uploadFromString(blobUrl: String, fileContent: String): String? {
 
-        val blobClient = getBlobClient(config.url + "/" + blobName)
-        try {
-            ByteArrayInputStream(body.toByteArray()).use { dataStream ->
-                blobClient.upload(
-                    dataStream,
-                    body.length.toLong(),
-                    true
-                )
-            }
-        } catch (e: IOException) {
-            e.printStackTrace()
+        val blobClient = this.getBlobClient(blobUrl)
+
+        ByteArrayInputStream(fileContent.toByteArray()).use {
+                dataStream -> blobClient.upload(dataStream, fileContent.length.toLong(), true)
         }
+
         return blobClient.blobUrl
     }
 
-   fun uploadSamples() {
-       var uri = this.javaClass.classLoader.getResource("samples").toURI()
-       var path = Paths.get(uri)
-       Files.list(path).forEach {
-           val blobClient = getBlobClient(config.url + "/" + it.fileName)
-           blobClient.uploadFromFile(it.toString())
-       }
-   }
+    fun uploadFromFile(blobUrl: String, fileUrl: String) {
+        val blobClient = this.getBlobClient(blobUrl)
+        blobClient.uploadFromFile(fileUrl, true)
+    }
 
 }
 
