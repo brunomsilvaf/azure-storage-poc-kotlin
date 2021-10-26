@@ -10,6 +10,8 @@ import java.io.ByteArrayInputStream
 @Service
 class AzureStorageClient(private val config: AzureStorageConfiguration) {
 
+    private val overwriteFile = true
+
     fun getCredentials(): TokenCredential {
         return ClientSecretCredentialBuilder()
             .clientId(config.clientId)
@@ -30,7 +32,7 @@ class AzureStorageClient(private val config: AzureStorageConfiguration) {
         val blobClient = this.getBlobClient(blobUrl)
 
         ByteArrayInputStream(fileContent.toByteArray()).use {
-                dataStream -> blobClient.upload(dataStream, fileContent.length.toLong(), true)
+                dataStream -> blobClient.upload(dataStream, fileContent.length.toLong(), overwriteFile)
         }
 
         return blobClient.blobUrl
@@ -38,7 +40,7 @@ class AzureStorageClient(private val config: AzureStorageConfiguration) {
 
     fun uploadFromFile(blobUrl: String, fileUrl: String) {
         val blobClient = this.getBlobClient(blobUrl)
-        blobClient.uploadFromFile(fileUrl, true)
+        blobClient.uploadFromFile(fileUrl, overwriteFile)
     }
 
 }
